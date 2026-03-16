@@ -347,7 +347,7 @@ export default function BottomNav() {
   return (
     <div style={{
       minHeight: "100vh",
-      background: "linear-gradient(145deg,#0d0d1a 0%,#0a1628 30%,#12082a 60%,#0d1520 100%)",
+     background: "linear-gradient(145deg, #020617 0%, #0f172a 40%, #1e3a8a 75%, #2563eb 100%)",
       display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "flex-end",
       fontFamily: "'SF Pro Display',-apple-system,BlinkMacSystemFont,sans-serif",
       paddingBottom: 48, userSelect: "none", WebkitUserSelect: "none",
