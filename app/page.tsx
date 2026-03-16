@@ -28,15 +28,15 @@ const bets = () => (
 
 const tabs = [
   { id: "home", Icon: Home, text: "Home", },
-  { id: "casino", Icon: casino, text: "Casino",  },
+  { id: "casino", Icon: casino, text: "Casino", },
   { id: "sport", Icon: sport, text: "Sport", },
-  { id: "bets", Icon: bets, text: "Bets",  },
+  { id: "bets", Icon: bets, text: "Bets", },
 ] as const;
 type TabId = (typeof tabs)[number]["id"];
 
 /* ── Easing ── */
-const leadE   = (t: number) => 1 - Math.pow(1 - t, 2.2);
-const trailE  = (t: number) => 1 - Math.pow(1 - t, 6.0);
+const leadE = (t: number) => 1 - Math.pow(1 - t, 2.2);
+const trailE = (t: number) => 1 - Math.pow(1 - t, 6.0);
 const easeOut = (t: number) => 1 - Math.pow(1 - t, 3);
 
 // ── SCALE = 1.40 (was 1.80) ──────────────────────────────────────
@@ -66,8 +66,8 @@ function navScaleCurve(t: number): number {
 
 function overlapToScaleY(r: number): number {
   if (r <= 0) return 1;
-  if (r < 0.4)  { const p = r / 0.4;           return 1 - 0.22 * p * p; }
-  if (r < 0.72) { const p = (r - 0.4) / 0.32;  return 0.78 + 0.38 * (1 - Math.pow(1 - p, 1.8)); }
+  if (r < 0.4) { const p = r / 0.4; return 1 - 0.22 * p * p; }
+  if (r < 0.72) { const p = (r - 0.4) / 0.32; return 0.78 + 0.38 * (1 - Math.pow(1 - p, 1.8)); }
   const p = (r - 0.72) / 0.28; return 1.16 - 0.16 * (1 - Math.pow(1 - p, 2));
 }
 const scaleYtoX = (sy: number) => 1 + (1 - sy) * 0.18;
@@ -88,23 +88,23 @@ interface DragRef {
 }
 
 export default function BottomNav() {
-  const [active,   setActive]   = useState<TabId>("home");
-  const [pill,     setPill]     = useState<PillState>({ left: 0, width: 0, sy: 1, sx: 1, shimmer: 0 });
+  const [active, setActive] = useState<TabId>("home");
+  const [pill, setPill] = useState<PillState>({ left: 0, width: 0, sy: 1, sx: 1, shimmer: 0 });
   const [navScale, setNavScale] = useState(1);
-  const [iconTf,   setIconTf]   = useState<Record<string, IconTf>>({
+  const [iconTf, setIconTf] = useState<Record<string, IconTf>>({
     home: DEFAULT_TF, dms: DEFAULT_TF, activity: DEFAULT_TF, more: DEFAULT_TF,
   });
 
-  const tabRefs      = useRef<Record<string, HTMLButtonElement | null>>({});
+  const tabRefs = useRef<Record<string, HTMLButtonElement | null>>({});
   const containerRef = useRef<HTMLDivElement>(null);
-  const animRaf      = useRef(0);
-  const shimRaf      = useRef(0);
-  const dragRef      = useRef<DragRef | null>(null);
-  const pillRef      = useRef<PillState>({ left: 0, width: 0, sy: 1, sx: 1, shimmer: 0 });
-  const activeRef    = useRef<TabId>("home");
+  const animRaf = useRef(0);
+  const shimRaf = useRef(0);
+  const dragRef = useRef<DragRef | null>(null);
+  const pillRef = useRef<PillState>({ left: 0, width: 0, sy: 1, sx: 1, shimmer: 0 });
+  const activeRef = useRef<TabId>("home");
 
   const getRect = useCallback((id: string) => {
-    const el  = tabRefs.current[id];
+    const el = tabRefs.current[id];
     const cnt = containerRef.current;
     if (!el || !cnt) return null;
     const a = el.getBoundingClientRect(), b = cnt.getBoundingClientRect();
@@ -142,7 +142,7 @@ export default function BottomNav() {
     startSy = 1,
     onDone?: () => void
   ) => {
-    const rects   = allRects();
+    const rects = allRects();
     const goRight = eL >= sL;
     cancelAnimationFrame(animRaf.current);
     animShimmer(0, 1, 200);
@@ -221,7 +221,7 @@ export default function BottomNav() {
   const handlePointerDown = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
     if (e.button > 0) return;
     const nb = containerRef.current!.getBoundingClientRect();
-    const x  = e.clientX - nb.left;
+    const x = e.clientX - nb.left;
 
     let tapped: TabId | null = null;
     tabs.forEach(({ id }) => {
@@ -235,7 +235,7 @@ export default function BottomNav() {
       d.mode = "longpress";
       setPillDirect({ sy: PEAK_SY, sx: 1 + (PEAK_SY - 1) * 0.30 });
       setNavScale(1.022);
-      try { containerRef.current?.setPointerCapture(d.pointerId); } catch (_) {}
+      try { containerRef.current?.setPointerCapture(d.pointerId); } catch (_) { }
     }, 200);
 
     dragRef.current = {
@@ -250,7 +250,7 @@ export default function BottomNav() {
     const d = dragRef.current;
     if (!d || d.done) return;
     const nb = containerRef.current!.getBoundingClientRect();
-    const x  = e.clientX - nb.left;
+    const x = e.clientX - nb.left;
     const dx = x - d.startX;
 
     if (d.mode === "pending" && Math.abs(dx) > 7) {
@@ -258,7 +258,7 @@ export default function BottomNav() {
       d.mode = "drag";
       setPillDirect({ sy: PEAK_SY, sx: 1 + (PEAK_SY - 1) * 0.30 });
       setNavScale(1.022);
-      try { containerRef.current?.setPointerCapture(d.pointerId); } catch (_) {}
+      try { containerRef.current?.setPointerCapture(d.pointerId); } catch (_) { }
     }
     if (d.mode !== "drag" && d.mode !== "longpress") return;
 
@@ -276,7 +276,7 @@ export default function BottomNav() {
 
     // During drag: pill follows pointer freely
     const tr = getRect(nearest); if (!tr) return;
-    const pw   = tr.width;
+    const pw = tr.width;
     const maxL = nb.width - 12 - pw;
     const newL = Math.max(0, Math.min(x - pw / 2, maxL));
     setPillDirect({ left: newL, width: pw, sy: PEAK_SY, sx: 1 + (PEAK_SY - 1) * 0.30, shimmer: 0.25 });
@@ -347,47 +347,48 @@ export default function BottomNav() {
   return (
     <div style={{
       minHeight: "100vh",
-     background: "linear-gradient(145deg, #020617 0%, #0f172a 40%, #1e3a8a 75%, #2563eb 100%)",
+      background: "linear-gradient(145deg, #020617 0%, #0f172a 40%, #1e3a8a 75%, #2563eb 100%)",
       display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "flex-end",
       fontFamily: "'SF Pro Display',-apple-system,BlinkMacSystemFont,sans-serif",
       paddingBottom: 48, userSelect: "none", WebkitUserSelect: "none",
       position: "relative", overflow: "hidden",
     }}>
       {/* Bokeh blobs */}
-      <div style={{ position:"absolute",inset:0,pointerEvents:"none",zIndex:0 }}>
-        <div style={{ position:"absolute",width:340,height:340,borderRadius:"50%",background:"radial-gradient(circle,rgba(88,86,214,.35) 0%,transparent 70%)",top:-80,left:-60,filter:"blur(40px)" }} />
-        <div style={{ position:"absolute",width:280,height:280,borderRadius:"50%",background:"radial-gradient(circle,rgba(52,199,89,.18) 0%,transparent 70%)",top:40,right:-40,filter:"blur(50px)" }} />
-        <div style={{ position:"absolute",width:400,height:400,borderRadius:"50%",background:"radial-gradient(circle,rgba(10,132,255,.22) 0%,transparent 70%)",bottom:60,left:"20%",filter:"blur(60px)" }} />
-        <div style={{ position:"absolute",width:220,height:220,borderRadius:"50%",background:"radial-gradient(circle,rgba(255,55,95,.16) 0%,transparent 70%)",bottom:100,right:30,filter:"blur(45px)" }} />
-        <div style={{ position:"absolute",width:180,height:180,borderRadius:"50%",background:"radial-gradient(circle,rgba(255,214,10,.10) 0%,transparent 70%)",top:"35%",left:"40%",filter:"blur(35px)" }} />
+      <div style={{ position: "absolute", inset: 0, pointerEvents: "none", zIndex: 0 }}>
+        <div style={{ position: "absolute", width: 340, height: 340, borderRadius: "50%", background: "radial-gradient(circle,rgba(88,86,214,.35) 0%,transparent 70%)", top: -80, left: -60, filter: "blur(40px)" }} />
+        <div style={{ position: "absolute", width: 280, height: 280, borderRadius: "50%", background: "radial-gradient(circle,rgba(52,199,89,.18) 0%,transparent 70%)", top: 40, right: -40, filter: "blur(50px)" }} />
+        <div style={{ position: "absolute", width: 400, height: 400, borderRadius: "50%", background: "radial-gradient(circle,rgba(10,132,255,.22) 0%,transparent 70%)", bottom: 60, left: "20%", filter: "blur(60px)" }} />
+        <div style={{ position: "absolute", width: 220, height: 220, borderRadius: "50%", background: "radial-gradient(circle,rgba(255,55,95,.16) 0%,transparent 70%)", bottom: 100, right: 30, filter: "blur(45px)" }} />
+        <div style={{ position: "absolute", width: 180, height: 180, borderRadius: "50%", background: "radial-gradient(circle,rgba(255,214,10,.10) 0%,transparent 70%)", top: "35%", left: "40%", filter: "blur(35px)" }} />
       </div>
 
       {/* Page content */}
-      <div style={{ flex:1,position:"relative",zIndex:1,width:"100%",display:"flex",alignItems:"center",justifyContent:"center" }}>
+      <div style={{ flex: 1, position: "relative", zIndex: 1, width: "100%", display: "flex", alignItems: "center", justifyContent: "center" }}>
         {tabs.map(t => (
           <div key={t.id} style={{
-            position:"absolute",display:"flex",flexDirection:"column",alignItems:"center",gap:12,
+            position: "absolute", display: "flex", flexDirection: "column", alignItems: "center", gap: 12,
             opacity: active === t.id ? 1 : 0,
             transform: active === t.id ? "translateY(0) scale(1)" : "translateY(16px) scale(0.95)",
-            transition:"opacity 0.45s ease, transform 0.55s cubic-bezier(0.34,1.4,0.64,1)",
-            pointerEvents:"none",
+            transition: "opacity 0.45s ease, transform 0.55s cubic-bezier(0.34,1.4,0.64,1)",
+            pointerEvents: "none",
           }}>
-            <p style={{ fontSize:28,fontWeight:600,color:"rgba(255,255,255,.92)",margin:0,letterSpacing:"-.5px",textShadow:"0 2px 12px rgba(0,0,0,.4)" }}>{t.text}</p>
+            <p style={{ fontSize: 28, fontWeight: 600, color: "rgba(255,255,255,.92)", margin: 0, letterSpacing: "-.5px", textShadow: "0 2px 12px rgba(0,0,0,.4)" }}>{t.text}</p>
           </div>
         ))}
       </div>
 
       {/* Nav row */}
-      <div style={{ position:"relative",zIndex:1,display:"flex",alignItems:"center",gap:10,padding:"0 6px" }}>
+      <div style={{ position: "relative", zIndex: 1, display: "flex", alignItems: "center", gap: 10, padding: "0 6px", width: "100%", justifyContent: "center", }}>
         <div
           ref={containerRef}
           style={{
-            position:"relative",display:"flex",alignItems:"center",
-            background:"rgba(255,255,255,.10)",
-            backdropFilter:"blur(40px) saturate(180%)",
-            WebkitBackdropFilter:"blur(40px) saturate(180%)",
-            borderRadius:100,padding:"5px 6px",
-            boxShadow:[
+            position: "relative", display: "flex", alignItems: "center", width: "90%",
+            justifyContent: "space-between",
+            background: "rgba(255,255,255,.10)",
+            backdropFilter: "blur(40px) saturate(180%)",
+            WebkitBackdropFilter: "blur(40px) saturate(180%)",
+            borderRadius: 100, padding: "5px 6px",
+            boxShadow: [
               "inset 0 1px 0 rgba(255,255,255,.30)",
               "inset 0 -1px 0 rgba(255,255,255,.04)",
               "inset 1px 0 0 rgba(255,255,255,.08)",
@@ -395,12 +396,12 @@ export default function BottomNav() {
               "0 20px 60px rgba(0,0,0,.45)",
               "0 4px 16px rgba(0,0,0,.30)",
             ].join(","),
-            border:".5px solid rgba(255,255,255,.14)",
-            touchAction:"none", cursor:"pointer",
-            overflow:"visible",
-            transform:`scale(${navScale})`,
-            transformOrigin:"center bottom",
-            willChange:"transform",
+            border: ".5px solid rgba(255,255,255,.14)",
+            touchAction: "none", cursor: "pointer",
+            overflow: "visible",
+            transform: `scale(${navScale})`,
+            transformOrigin: "center bottom",
+            willChange: "transform",
           }}
           onPointerDown={handlePointerDown}
           onPointerMove={handlePointerMove}
@@ -409,22 +410,26 @@ export default function BottomNav() {
         >
           {/* Pill */}
           <div style={{
-            position:"absolute",top:5,bottom:5,
-            left: pill.left, width: pill.width,
-            borderRadius:100,
+            position: "absolute",
+            top: 5,
+            bottom: 5,
+            left: pill.left,
+            width: pill.width,
+            borderRadius: 100,
             background: pillBg,
-            backdropFilter:"blur(20px) saturate(200%)",
-            WebkitBackdropFilter:"blur(20px) saturate(200%)",
+            backdropFilter: "blur(20px) saturate(200%)",
+            WebkitBackdropFilter: "blur(20px) saturate(200%)",
             boxShadow: pillBoxShadow,
-            border:`0.5px solid rgba(255,255,255,${0.20 + s * 0.15})`,
-            transform:`scaleY(${pill.sy}) scaleX(${pill.sx})`,
-            transformOrigin:"center center",
-            willChange:"left,width,transform",
-            overflow:"hidden", pointerEvents:"none",
+            border: `0.5px solid rgba(255,255,255,${0.20 + s * 0.15})`,
+            transform: `scaleY(${pill.sy > 1 ? pill.sy * 1.08 : pill.sy}) scaleX(${pill.sy > 1 ? pill.sx * 1.06 : pill.sx})`,
+            transformOrigin: "center center",
+            willChange: "left,width,transform",
+            overflow: "hidden",
+            pointerEvents: "none",
           }}>
-            <div style={{ position:"absolute",top:0,left:"8%",right:"8%",height:1.5,borderRadius:10,background:`rgba(255,255,255,${0.60+s*0.35})` }} />
-            <div style={{ position:"absolute",inset:0,background:`radial-gradient(ellipse at 50% 0%,rgba(255,255,255,${0.12+s*0.10}) 0%,transparent 70%)` }} />
-            <div style={{ position:"absolute",bottom:0,left:"15%",right:"15%",height:1,borderRadius:10,background:`rgba(0,0,0,${0.12-s*0.08})` }} />
+            <div style={{ position: "absolute", top: 0, left: "8%", right: "8%", height: 1.5, borderRadius: 10, background: `rgba(255,255,255,${0.60 + s * 0.35})` }} />
+            <div style={{ position: "absolute", inset: 0, background: `radial-gradient(ellipse at 50% 0%,rgba(255,255,255,${0.12 + s * 0.10}) 0%,transparent 70%)` }} />
+            <div style={{ position: "absolute", bottom: 0, left: "15%", right: "15%", height: 1, borderRadius: 10, background: `rgba(0,0,0,${0.12 - s * 0.08})` }} />
           </div>
 
           {/* Tabs */}
@@ -433,29 +438,29 @@ export default function BottomNav() {
             const tf = iconTf[tab.id] ?? DEFAULT_TF;
             return (
               <button key={tab.id} ref={el => { tabRefs.current[tab.id] = el; }} style={{
-                position:"relative",zIndex:1,
-                display:"flex",flexDirection:"column",alignItems:"center",gap:3,
-                padding:"8px 14px",border:"none",background:"transparent",
-                cursor:"pointer",borderRadius:100,minWidth:68,
+                position: "relative", zIndex: 1,
+                display: "flex", flexDirection: "column", alignItems: "center", gap: 3,
+                padding: "8px 0px", border: "none", background: "transparent",
+                cursor: "pointer", borderRadius: 100, minWidth: 88,
                 color: isActive ? "rgba(255,255,255,.96)" : "rgba(255,255,255,.42)",
-                WebkitTapHighlightColor:"transparent",outline:"none",
-                transition:"color .35s ease",pointerEvents:"none",
+                WebkitTapHighlightColor: "transparent", outline: "none",
+                transition: "color .35s ease", pointerEvents: "none",
               }}>
                 <div style={{
-                  transform:`scaleY(${tf.sy}) scaleX(${tf.sx})`,
-                  transformOrigin:"center bottom",
-                  willChange:"transform",lineHeight:1,
-                  display:"flex",alignItems:"center",justifyContent:"center",
+                  transform: `scaleY(${tf.sy}) scaleX(${tf.sx})`,
+                  transformOrigin: "center bottom",
+                  willChange: "transform", lineHeight: 1,
+                  display: "flex", alignItems: "center", justifyContent: "center",
                   filter: isActive ? "drop-shadow(0 0 8px rgba(255,255,255,0.5))" : "none",
-                  transition:"filter .35s ease",
+                  transition: "filter .35s ease",
                 }}>
                   <tab.Icon />
                 </div>
                 <span style={{
-                  fontSize:11, fontWeight: isActive ? 600 : 400, lineHeight:1,
+                  fontSize: 11, fontWeight: isActive ? 600 : 400, lineHeight: 1,
                   letterSpacing: isActive ? "-.2px" : ".1px",
-                  transition:"font-weight .3s, letter-spacing .3s, color .35s ease",
-                  display:"inline-block", transform:`scaleX(${tf.sx})`, willChange:"transform",
+                  transition: "font-weight .3s, letter-spacing .3s, color .35s ease",
+                  display: "inline-block", transform: `scaleX(${tf.sx})`, willChange: "transform",
                 }}>
                   {tab.text}
                 </span>
