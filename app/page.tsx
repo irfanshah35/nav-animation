@@ -329,11 +329,6 @@ export default function BottomNav() {
         <div style={{ position: "absolute", width: 180, height: 180, borderRadius: "50%", background: "radial-gradient(circle,rgba(255,214,10,.10) 0%,transparent 70%)", top: "35%", left: "40%", filter: "blur(35px)" }} />
       </div>
 
-      {/* Hint */}
-      <p style={{ position: "absolute", bottom: 130, left: 0, right: 0, textAlign: "center", fontSize: 12, color: "rgba(255,255,255,.25)", letterSpacing: ".3px", pointerEvents: "none", zIndex: 1 }}>
-        tap to switch · drag to slide · long-press &amp; drag
-      </p>
-
       {/* Page content */}
       <div style={{ flex: 1, position: "relative", zIndex: 1, width: "100%", display: "flex", alignItems: "center", justifyContent: "center" }}>
         {tabs.map(t => (
