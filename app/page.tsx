@@ -209,7 +209,7 @@ export default function BottomNav() {
     if (!from || !to) return;
     activeRef.current = id;
     setActive(id);
-    runAnim(from.left, from.width, to.left, to.width, id, 750, 1);
+    runAnim(from.left, from.width, to.left, to.width, id, 240, 1);
   }, [getRect, runAnim]);
 
   useEffect(() => {
