@@ -606,7 +606,7 @@ export default function BottomNav() {
           }}
           onPointerUp={(e) => {
             e.stopPropagation();
-            setTimeout(() => setClicked(false), 150); // shrink back smoothly
+            setTimeout(() => setClicked(false), 1200);
             console.log("Search clicked!");
           }}
           onPointerLeave={(e) => {
