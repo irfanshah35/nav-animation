@@ -110,8 +110,10 @@ export default function BottomNav() {
   const dragRef = useRef<DragRef | null>(null);
   const pillRef = useRef<PillState>({ left: 0, width: 0, sy: 1, sx: 1, shimmer: 0 });
   const activeRef = useRef<TabId>("home");
-  const searchRef = useRef<HTMLButtonElement>(null);
   const [clicked, setClicked] = useState(false);
+  const [dragX, setDragX] = useState(0);
+  const [dragY, setDragY] = useState(0);
+  const searchDragRef = useRef<{ startY: number; dragging: boolean } | null>(null);
 
 
 
@@ -597,21 +599,74 @@ export default function BottomNav() {
             overflow: "hidden",
             zIndex: 10,
             pointerEvents: "auto",
-            transition: "all 0.2s cubic-bezier(0.34,1.56,0.64,1)",  
-            transform: clicked ? "scale(1.05)" : "scale(1)",  
+
+            // ✅ disable transition while dragging
+            transition: searchDragRef.current?.dragging
+              ? "none"
+              : "all 0.25s cubic-bezier(0.34,1.56,0.64,1)",
+
+            // ✅ vertical drag only
+            transform: `
+      translateY(${dragY}px)
+      scale(${clicked ? 1.15 : 1})
+    `,
           }}
+
           onPointerDown={(e) => {
             e.stopPropagation();
-            setClicked(true); // grow button
+
+            setClicked(true);
+
+            searchDragRef.current = {
+              startY: e.clientY,
+              dragging: false,
+            };
+
+            e.currentTarget.setPointerCapture(e.pointerId);
           }}
+
+          onPointerMove={(e) => {
+            const d = searchDragRef.current;
+            if (!d) return;
+
+            const dy = e.clientY - d.startY;
+
+            // 🔥 activate drag after small movement
+            if (Math.abs(dy) > 5 && !d.dragging) {
+              d.dragging = true;
+            }
+
+            if (d.dragging) {
+              // ✅ LIMIT movement (no overlap with tabs)
+              const clamped = Math.max(-20, Math.min(20, dy));
+              setDragY(clamped);
+            }
+          }}
+
           onPointerUp={(e) => {
             e.stopPropagation();
-            setTimeout(() => setClicked(false), 1200);
-            console.log("Search clicked!");
+
+            const d = searchDragRef.current;
+
+            if (!d?.dragging) {
+              console.log("Search clicked!");
+            }
+
+            // ✅ smooth snap back
+            setTimeout(() => {
+              setClicked(false);
+              setDragY(0);
+            }, 120);
+
+            searchDragRef.current = null;
           }}
+
           onPointerLeave={(e) => {
             e.stopPropagation();
-            setClicked(false); // reset if pointer leaves
+
+            setClicked(false);
+            setDragY(0);
+            searchDragRef.current = null;
           }}
         >
           <SearchIcon />
