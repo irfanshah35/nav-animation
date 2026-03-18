@@ -25,12 +25,19 @@ const bets = () => (
     <path d="M4 6h16v4H4V6zm0 8h16v4H4v-4z" />
   </svg>
 );
+const SearchIcon = () => (
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <circle cx="11" cy="11" r="7" />
+    <path d="M21 21l-4.35-4.35" />
+  </svg>
+);
 
 const tabs = [
   { id: "home", Icon: Home, text: "Home", },
   { id: "casino", Icon: casino, text: "Casino", },
   { id: "sport", Icon: sport, text: "Sport", },
   { id: "bets", Icon: bets, text: "Bets", },
+  // { id: "search", Icon: SearchIcon, text: "Search" },
 ] as const;
 type TabId = (typeof tabs)[number]["id"];
 
@@ -89,6 +96,7 @@ interface DragRef {
 
 export default function BottomNav() {
   const [active, setActive] = useState<TabId>("home");
+  
   const [pill, setPill] = useState<PillState>({ left: 0, width: 0, sy: 1, sx: 1, shimmer: 0 });
   const [navScale, setNavScale] = useState(1);
   const [iconTf, setIconTf] = useState<Record<string, IconTf>>({
@@ -102,6 +110,8 @@ export default function BottomNav() {
   const dragRef = useRef<DragRef | null>(null);
   const pillRef = useRef<PillState>({ left: 0, width: 0, sy: 1, sx: 1, shimmer: 0 });
   const activeRef = useRef<TabId>("home");
+  const searchTf = useRef({ sy: 1, sx: 1 });
+  
 
   const getRect = useCallback((id: string) => {
     const el = tabRefs.current[id];
@@ -121,6 +131,7 @@ export default function BottomNav() {
     pillRef.current = { ...pillRef.current, ...p };
     setPill(prev => ({ ...prev, ...p }));
   }, []);
+
 
   const animShimmer = useCallback((from: number, to: number, dur: number) => {
     cancelAnimationFrame(shimRaf.current);
@@ -218,99 +229,172 @@ export default function BottomNav() {
   }, [getRect, setPillDirect]);
 
   /* ── Pointer handlers ── */
+
   const handlePointerDown = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
-    if (e.button > 0) return;
+
+    if (e.button > 0) return; // only left click / touch
+
     const nb = containerRef.current!.getBoundingClientRect();
     const x = e.clientX - nb.left;
 
     let tapped: TabId | null = null;
+
     tabs.forEach(({ id }) => {
       const r = getRect(id);
-      if (r && x >= r.left - 4 && x <= r.left + r.width + 4) tapped = id;
+      if (r && x >= r.left - 4 && x <= r.left + r.width + 4) {
+        tapped = id;
+      }
     });
 
     const timer = setTimeout(() => {
       const d = dragRef.current;
       if (!d || d.done) return;
+
       d.mode = "longpress";
-      setPillDirect({ sy: PEAK_SY, sx: 1 + (PEAK_SY - 1) * 0.30 });
+
+      setPillDirect({
+        sy: PEAK_SY,
+        sx: 1 + (PEAK_SY - 1) * 0.30,
+      });
+
       setNavScale(1.022);
-      try { containerRef.current?.setPointerCapture(d.pointerId); } catch (_) { }
+
+      try {
+        containerRef.current?.setPointerCapture(d.pointerId);
+      } catch (_) { }
     }, 200);
 
     dragRef.current = {
-      startX: x, startCX: e.clientX, pointerId: e.pointerId,
-      tapped, mode: "pending", nearest: tapped ?? activeRef.current,
-      done: false, timer,
+      startX: x,
+      startCX: e.clientX,
+      pointerId: e.pointerId,
+      tapped,
+      mode: "pending",
+      nearest: tapped ?? activeRef.current,
+      done: false,
+      timer,
     };
+
     e.preventDefault();
   }, [getRect, setPillDirect]);
 
   const handlePointerMove = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
     const d = dragRef.current;
     if (!d || d.done) return;
+
     const nb = containerRef.current!.getBoundingClientRect();
     const x = e.clientX - nb.left;
     const dx = x - d.startX;
 
+    // Start drag if moved enough
     if (d.mode === "pending" && Math.abs(dx) > 7) {
       clearTimeout(d.timer);
       d.mode = "drag";
-      setPillDirect({ sy: PEAK_SY, sx: 1 + (PEAK_SY - 1) * 0.30 });
+
+      setPillDirect({
+        sy: PEAK_SY,
+        sx: 1 + (PEAK_SY - 1) * 0.30,
+      });
+
       setNavScale(1.022);
-      try { containerRef.current?.setPointerCapture(d.pointerId); } catch (_) { }
+
+      try {
+        containerRef.current?.setPointerCapture(d.pointerId);
+      } catch (_) { }
     }
+
     if (d.mode !== "drag" && d.mode !== "longpress") return;
 
     cancelAnimationFrame(animRaf.current);
     cancelAnimationFrame(shimRaf.current);
 
-    // Find nearest tab by center distance
-    let nearest: TabId = d.nearest, nearestDist = Infinity;
+    // 🔥 Find nearest tab
+    let nearest: TabId = d.nearest;
+    let nearestDist = Infinity;
+
     tabs.forEach(({ id }) => {
-      const r = getRect(id); if (!r) return;
+      const r = getRect(id);
+      if (!r) return;
+
       const dist = Math.abs(x - (r.left + r.width / 2));
-      if (dist < nearestDist) { nearestDist = dist; nearest = id; }
+      if (dist < nearestDist) {
+        nearestDist = dist;
+        nearest = id;
+      }
     });
+
     d.nearest = nearest;
 
-    // During drag: pill follows pointer freely
-    const tr = getRect(nearest); if (!tr) return;
+    // 🔥 Pill follow pointer
+    const tr = getRect(nearest);
+    if (!tr) return;
+
     const pw = tr.width;
     const maxL = nb.width - 12 - pw;
     const newL = Math.max(0, Math.min(x - pw / 2, maxL));
-    setPillDirect({ left: newL, width: pw, sy: PEAK_SY, sx: 1 + (PEAK_SY - 1) * 0.30, shimmer: 0.25 });
+
+    setPillDirect({
+      left: newL,
+      width: pw,
+      sy: PEAK_SY,
+      sx: 1 + (PEAK_SY - 1) * 0.30,
+      shimmer: 0.25,
+    });
+
     setNavScale(1.022);
 
+    // Reset icons
     const newTf: Record<string, IconTf> = {};
-    tabs.forEach(({ id }) => { newTf[id] = DEFAULT_TF; });
+    tabs.forEach(({ id }) => {
+      newTf[id] = DEFAULT_TF;
+    });
+
     setIconTf(newTf);
     setActive(nearest);
+
   }, [getRect, setPillDirect]);
 
   const handlePointerUp = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
     const d = dragRef.current;
     if (!d) return;
+
     clearTimeout(d.timer);
     d.done = true;
     dragRef.current = null;
+
     const dx = e.clientX - d.startCX;
 
     if (d.mode === "drag" || d.mode === "longpress") {
       const targetId = d.nearest;
       const { left: sL, width: sW, sy: currentSy } = pillRef.current;
-      // Always snap to exact tab rect — pill cannot rest at a corner
+
       const to = getRect(targetId);
-      if (!to) { setPillDirect({ sy: 1, sx: 1 }); setNavScale(1); return; }
+      if (!to) {
+        setPillDirect({ sy: 1, sx: 1 });
+        setNavScale(1);
+        return;
+      }
+
       activeRef.current = targetId;
       setActive(targetId);
+
       runAnim(sL, sW, to.left, to.width, targetId, 520, currentSy);
+
     } else if (Math.abs(dx) < 8 && d.tapped) {
+      // 🔥 Tap case
       goToTab(d.tapped);
+
     } else {
-      // No drag, no tap — snap pill back to active tab exactly
+      // 🔥 Fallback snap
       const to = getRect(activeRef.current);
-      if (to) setPillDirect({ left: to.left, width: to.width, sy: 1, sx: 1 });
+      if (to) {
+        setPillDirect({
+          left: to.left,
+          width: to.width,
+          sy: 1,
+          sx: 1,
+        });
+      }
       setNavScale(1);
     }
   }, [getRect, setPillDirect, runAnim, goToTab]);
@@ -318,15 +402,23 @@ export default function BottomNav() {
   const handlePointerCancel = useCallback(() => {
     const d = dragRef.current;
     if (!d) return;
+
     clearTimeout(d.timer);
     d.done = true;
     dragRef.current = null;
+
     const to = getRect(activeRef.current);
     const { left: sL, width: sW, sy: currentSy } = pillRef.current;
-    if (to) runAnim(sL, sW, to.left, to.width, activeRef.current, 420, currentSy);
-    else { setPillDirect({ sy: 1, sx: 1 }); setNavScale(1); }
+
+    if (to) {
+      runAnim(sL, sW, to.left, to.width, activeRef.current, 420, currentSy);
+    } else {
+      setPillDirect({ sy: 1, sx: 1 });
+      setNavScale(1);
+    }
   }, [getRect, setPillDirect, runAnim]);
 
+  /* ── Pointer handlers ── */
   useEffect(() => () => {
     cancelAnimationFrame(animRaf.current);
     cancelAnimationFrame(shimRaf.current);
@@ -342,6 +434,18 @@ export default function BottomNav() {
     `inset -1px 0 0 rgba(255,255,255,${0.10 + s * 0.10})`,
     `0 8px 32px rgba(0,0,0,${0.28 + s * 0.12})`,
     `0 2px 8px rgba(0,0,0,0.20)`,
+  ].join(",");
+
+  // 🔥 static values (component ke andar top pe define karo)
+  const searchBg = "rgba(255,255,255,0.18)";
+  const searchBorder = "0.5px solid rgba(255,255,255,0.22)";
+  const searchShadow = [
+    "inset 0 1px 0 rgba(255,255,255,0.65)",
+    "inset 0 -1px 0 rgba(255,255,255,0.12)",
+    "inset 1px 0 0 rgba(255,255,255,0.18)",
+    "inset -1px 0 0 rgba(255,255,255,0.14)",
+    "0 8px 32px rgba(0,0,0,0.35)",
+    "0 2px 8px rgba(0,0,0,0.20)"
   ].join(",");
 
   return (
@@ -378,11 +482,11 @@ export default function BottomNav() {
       </div>
 
       {/* Nav row */}
-      <div style={{ position: "relative", zIndex: 1, display: "flex", alignItems: "center", gap: 10, padding: "0 6px", width: "100%", justifyContent: "center", }}>
+      <div style={{ position: "relative", zIndex: 1, display: "flex", alignItems: "center", gap: 10, padding: "0 6px", }}>
         <div
           ref={containerRef}
           style={{
-            position: "relative", display: "flex", alignItems: "center", width: "90%",
+            position: "relative", display: "flex", alignItems: "center", width: "100%",
             justifyContent: "space-between",
             background: "rgba(255,255,255,.10)",
             backdropFilter: "blur(40px) saturate(180%)",
@@ -441,7 +545,7 @@ export default function BottomNav() {
                 position: "relative", zIndex: 1,
                 display: "flex", flexDirection: "column", alignItems: "center", gap: 3,
                 padding: "8px 0px", border: "none", background: "transparent",
-                cursor: "pointer", borderRadius: 100, minWidth: 88,
+                cursor: "pointer", borderRadius: 100, minWidth: 68,
                 color: isActive ? "rgba(255,255,255,.96)" : "rgba(255,255,255,.42)",
                 WebkitTapHighlightColor: "transparent", outline: "none",
                 transition: "color .35s ease", pointerEvents: "none",
@@ -468,6 +572,90 @@ export default function BottomNav() {
             );
           })}
         </div>
+        {/* Search Button */}
+        <button
+          data-search
+          style={{
+            position: "relative",
+            width: 52,
+            height: 52,
+            borderRadius: "50%",
+            background: searchBg,
+            backdropFilter: "blur(20px) saturate(200%)",
+            WebkitBackdropFilter: "blur(20px) saturate(200%)",
+            boxShadow: searchShadow,
+            border: searchBorder,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            cursor: "pointer",
+            color: "rgba(255,255,255,.65)",
+            outline: "none",
+            flexShrink: 0,
+            overflow: "hidden",
+            // transform: `scaleY(${searchTf.current.sy}) scaleX(${searchTf.current.sx})`,
+             transform: `scaleY(${pill.sy > 1 ? pill.sy * 1.08 : pill.sy}) scaleX(${pill.sy > 1 ? pill.sx * 1.06 : pill.sx})`,
+            transition: "transform 0.2s ease",
+          }}
+
+          onPointerDown={e => {
+            e.stopPropagation();
+            searchTf.current = { sy: 0.94, sx: 0.90 };
+            e.currentTarget.style.transform = `scaleY(${searchTf.current.sy}) scaleX(${searchTf.current.sx})`;
+          }}
+
+          onPointerUp={e => {
+            e.stopPropagation();
+            const el = e.currentTarget;
+
+            // quick overshoot for effect
+            searchTf.current = { sy: 1.05, sx: 1.05 };
+            el.style.transform = `scaleY(${searchTf.current.sy}) scaleX(${searchTf.current.sx})`;
+
+            setTimeout(() => {
+              searchTf.current = { sy: 1, sx: 1 };
+              el.style.transform = `scaleY(1) scaleX(1)`;
+            }, 120);
+          }}
+
+          onPointerMove={e => e.stopPropagation()}
+          onPointerLeave={e => {
+            e.stopPropagation();
+            searchTf.current = { sy: 1, sx: 1 };
+            e.currentTarget.style.transform = `scaleY(1) scaleX(1)`;
+          }}
+        >
+          {/* TOP SHINE */}
+          <div style={{
+            position: "absolute",
+            top: 0,
+            left: "15%",
+            right: "15%",
+            height: 1.5,
+            borderRadius: 10,
+            background: "rgba(255,255,255,0.65)"
+          }} />
+
+          {/* INNER GLOW */}
+          <div style={{
+            position: "absolute",
+            inset: 0,
+            background: "radial-gradient(circle at 50% 20%, rgba(255,255,255,0.14) 0%, transparent 70%)"
+          }} />
+
+          {/* BOTTOM SHADOW */}
+          <div style={{
+            position: "absolute",
+            bottom: 0,
+            left: "25%",
+            right: "25%",
+            height: 1,
+            borderRadius: 10,
+            background: "rgba(0,0,0,0.12)"
+          }} />
+
+          <SearchIcon />
+        </button>
       </div>
     </div>
   );
