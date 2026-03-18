@@ -597,8 +597,8 @@ export default function BottomNav() {
             overflow: "hidden",
             zIndex: 10,
             pointerEvents: "auto",
-            transition: "all 0.2s cubic-bezier(0.34,1.56,0.64,1)", // smooth width/height + transform
-            transform: clicked ? "scale(1.05)" : "scale(1)", // subtle extra scale if you want
+            transition: "all 0.2s cubic-bezier(0.34,1.56,0.64,1)",  
+            transform: clicked ? "scale(1.05)" : "scale(1)",  
           }}
           onPointerDown={(e) => {
             e.stopPropagation();
