@@ -112,7 +112,7 @@ export default function BottomNav() {
   const activeRef = useRef<TabId>("home");
 
   const [clicked, setClicked] = useState(false);
-  const [dragY, setDragY] = useState(0);
+  // const [dragY, setDragY] = useState(0);
 
   const searchDragRef = useRef<{
     startY: number;
@@ -618,10 +618,10 @@ export default function BottomNav() {
               : "all 0.25s cubic-bezier(0.34,1.56,0.64,1)",
 
             // ✅ vertical drag + scale
-            transform: `
-      translateY(${dragY}px)
-      scale(${clicked ? 1.15 : 1})
-    `,
+    //         transform: `
+    //   translateY(${dragY}px)
+    //   scale(${clicked ? 1.15 : 1})
+    // `,
           }}
 
           onPointerDown={(e) => {
@@ -657,7 +657,7 @@ export default function BottomNav() {
               // 🔥 limit movement
               const clamped = Math.max(-20, Math.min(20, dy * resistance));
 
-              setDragY(clamped);
+              // setDragY(clamped);
             }
           }}
 
@@ -674,7 +674,7 @@ export default function BottomNav() {
             // 🔥 smooth snap back
             setTimeout(() => {
               setClicked(false);
-              setDragY(0);
+              // setDragY(0);
             }, 120);
 
             searchDragRef.current = null;
@@ -684,7 +684,7 @@ export default function BottomNav() {
             e.stopPropagation();
 
             setClicked(false);
-            setDragY(0);
+            // setDragY(0);
             searchDragRef.current = null;
           }}
 
