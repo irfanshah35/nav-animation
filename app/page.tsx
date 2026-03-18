@@ -668,7 +668,7 @@ export default function BottomNav() {
 
             // 👉 pure click
             if (!d?.dragging) {
-              console.log("Search clicked!");
+              console.log("Search clicked!1234");
             }
 
             // 🔥 smooth snap back
