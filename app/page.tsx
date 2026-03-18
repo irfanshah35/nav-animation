@@ -96,7 +96,7 @@ interface DragRef {
 
 export default function BottomNav() {
   const [active, setActive] = useState<TabId>("home");
-  
+  const [searchScale, setSearchScale] = useState({ sy: 1, sx: 1 });
   const [pill, setPill] = useState<PillState>({ left: 0, width: 0, sy: 1, sx: 1, shimmer: 0 });
   const [navScale, setNavScale] = useState(1);
   const [iconTf, setIconTf] = useState<Record<string, IconTf>>({
@@ -110,8 +110,10 @@ export default function BottomNav() {
   const dragRef = useRef<DragRef | null>(null);
   const pillRef = useRef<PillState>({ left: 0, width: 0, sy: 1, sx: 1, shimmer: 0 });
   const activeRef = useRef<TabId>("home");
-  const searchTf = useRef({ sy: 1, sx: 1 });
-  
+  const searchRef = useRef<HTMLButtonElement>(null);
+  const [clicked, setClicked] = useState(false);
+
+
 
   const getRect = useCallback((id: string) => {
     const el = tabRefs.current[id];
@@ -448,6 +450,7 @@ export default function BottomNav() {
     "0 2px 8px rgba(0,0,0,0.20)"
   ].join(",");
 
+
   return (
     <div style={{
       minHeight: "100vh",
@@ -458,7 +461,7 @@ export default function BottomNav() {
       position: "relative", overflow: "hidden",
     }}>
       {/* Bokeh blobs */}
-      <div style={{ position: "absolute", inset: 0, pointerEvents: "none", zIndex: 0 }}>
+      <div style={{ position: "absolute", inset: 0, zIndex: 0 }}>
         <div style={{ position: "absolute", width: 340, height: 340, borderRadius: "50%", background: "radial-gradient(circle,rgba(88,86,214,.35) 0%,transparent 70%)", top: -80, left: -60, filter: "blur(40px)" }} />
         <div style={{ position: "absolute", width: 280, height: 280, borderRadius: "50%", background: "radial-gradient(circle,rgba(52,199,89,.18) 0%,transparent 70%)", top: 40, right: -40, filter: "blur(50px)" }} />
         <div style={{ position: "absolute", width: 400, height: 400, borderRadius: "50%", background: "radial-gradient(circle,rgba(10,132,255,.22) 0%,transparent 70%)", bottom: 60, left: "20%", filter: "blur(60px)" }} />
@@ -474,7 +477,6 @@ export default function BottomNav() {
             opacity: active === t.id ? 1 : 0,
             transform: active === t.id ? "translateY(0) scale(1)" : "translateY(16px) scale(0.95)",
             transition: "opacity 0.45s ease, transform 0.55s cubic-bezier(0.34,1.4,0.64,1)",
-            pointerEvents: "none",
           }}>
             <p style={{ fontSize: 28, fontWeight: 600, color: "rgba(255,255,255,.92)", margin: 0, letterSpacing: "-.5px", textShadow: "0 2px 12px rgba(0,0,0,.4)" }}>{t.text}</p>
           </div>
@@ -482,7 +484,7 @@ export default function BottomNav() {
       </div>
 
       {/* Nav row */}
-      <div style={{ position: "relative", zIndex: 1, display: "flex", alignItems: "center", gap: 10, padding: "0 6px", }}>
+      <div style={{ position: "relative", zIndex: 1, display: "flex", alignItems: "center", gap: "15px", padding: "0 6px", }}>
         <div
           ref={containerRef}
           style={{
@@ -529,7 +531,6 @@ export default function BottomNav() {
             transformOrigin: "center center",
             willChange: "left,width,transform",
             overflow: "hidden",
-            pointerEvents: "none",
           }}>
             <div style={{ position: "absolute", top: 0, left: "8%", right: "8%", height: 1.5, borderRadius: 10, background: `rgba(255,255,255,${0.60 + s * 0.35})` }} />
             <div style={{ position: "absolute", inset: 0, background: `radial-gradient(ellipse at 50% 0%,rgba(255,255,255,${0.12 + s * 0.10}) 0%,transparent 70%)` }} />
@@ -548,7 +549,7 @@ export default function BottomNav() {
                 cursor: "pointer", borderRadius: 100, minWidth: 68,
                 color: isActive ? "rgba(255,255,255,.96)" : "rgba(255,255,255,.42)",
                 WebkitTapHighlightColor: "transparent", outline: "none",
-                transition: "color .35s ease", pointerEvents: "none",
+                transition: "color .35s ease",
               }}>
                 <div style={{
                   transform: `scaleY(${tf.sy}) scaleX(${tf.sx})`,
@@ -573,12 +574,13 @@ export default function BottomNav() {
           })}
         </div>
         {/* Search Button */}
+
         <button
           data-search
           style={{
             position: "relative",
-            width: 52,
-            height: 52,
+            width: clicked ? 64 : 52,
+            height: clicked ? 64 : 52,
             borderRadius: "50%",
             background: searchBg,
             backdropFilter: "blur(20px) saturate(200%)",
@@ -593,67 +595,25 @@ export default function BottomNav() {
             outline: "none",
             flexShrink: 0,
             overflow: "hidden",
-            // transform: `scaleY(${searchTf.current.sy}) scaleX(${searchTf.current.sx})`,
-             transform: `scaleY(${pill.sy > 1 ? pill.sy * 1.08 : pill.sy}) scaleX(${pill.sy > 1 ? pill.sx * 1.06 : pill.sx})`,
-            transition: "transform 0.2s ease",
+            zIndex: 10,
+            pointerEvents: "auto",
+            transition: "all 0.2s cubic-bezier(0.34,1.56,0.64,1)", // smooth width/height + transform
+            transform: clicked ? "scale(1.05)" : "scale(1)", // subtle extra scale if you want
           }}
-
-          onPointerDown={e => {
+          onPointerDown={(e) => {
             e.stopPropagation();
-            searchTf.current = { sy: 0.94, sx: 0.90 };
-            e.currentTarget.style.transform = `scaleY(${searchTf.current.sy}) scaleX(${searchTf.current.sx})`;
+            setClicked(true); // grow button
           }}
-
-          onPointerUp={e => {
+          onPointerUp={(e) => {
             e.stopPropagation();
-            const el = e.currentTarget;
-
-            // quick overshoot for effect
-            searchTf.current = { sy: 1.05, sx: 1.05 };
-            el.style.transform = `scaleY(${searchTf.current.sy}) scaleX(${searchTf.current.sx})`;
-
-            setTimeout(() => {
-              searchTf.current = { sy: 1, sx: 1 };
-              el.style.transform = `scaleY(1) scaleX(1)`;
-            }, 120);
+            setTimeout(() => setClicked(false), 150); // shrink back smoothly
+            console.log("Search clicked!");
           }}
-
-          onPointerMove={e => e.stopPropagation()}
-          onPointerLeave={e => {
+          onPointerLeave={(e) => {
             e.stopPropagation();
-            searchTf.current = { sy: 1, sx: 1 };
-            e.currentTarget.style.transform = `scaleY(1) scaleX(1)`;
+            setClicked(false); // reset if pointer leaves
           }}
         >
-          {/* TOP SHINE */}
-          <div style={{
-            position: "absolute",
-            top: 0,
-            left: "15%",
-            right: "15%",
-            height: 1.5,
-            borderRadius: 10,
-            background: "rgba(255,255,255,0.65)"
-          }} />
-
-          {/* INNER GLOW */}
-          <div style={{
-            position: "absolute",
-            inset: 0,
-            background: "radial-gradient(circle at 50% 20%, rgba(255,255,255,0.14) 0%, transparent 70%)"
-          }} />
-
-          {/* BOTTOM SHADOW */}
-          <div style={{
-            position: "absolute",
-            bottom: 0,
-            left: "25%",
-            right: "25%",
-            height: 1,
-            borderRadius: 10,
-            background: "rgba(0,0,0,0.12)"
-          }} />
-
           <SearchIcon />
         </button>
       </div>
