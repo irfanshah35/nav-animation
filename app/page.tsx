@@ -110,10 +110,14 @@ export default function BottomNav() {
   const dragRef = useRef<DragRef | null>(null);
   const pillRef = useRef<PillState>({ left: 0, width: 0, sy: 1, sx: 1, shimmer: 0 });
   const activeRef = useRef<TabId>("home");
+
   const [clicked, setClicked] = useState(false);
-  const [dragX, setDragX] = useState(0);
   const [dragY, setDragY] = useState(0);
-  const searchDragRef = useRef<{ startY: number; dragging: boolean } | null>(null);
+
+  const searchDragRef = useRef<{
+    startY: number;
+    dragging: boolean;
+  } | null>(null);
 
 
 
@@ -600,12 +604,20 @@ export default function BottomNav() {
             zIndex: 10,
             pointerEvents: "auto",
 
+            // 🔥 MUST for mobile drag
+            touchAction: "none",
+            WebkitUserSelect: "none",
+            userSelect: "none",
+
+            // 🔥 smoother rendering
+            willChange: "transform",
+
             // ✅ disable transition while dragging
             transition: searchDragRef.current?.dragging
               ? "none"
               : "all 0.25s cubic-bezier(0.34,1.56,0.64,1)",
 
-            // ✅ vertical drag only
+            // ✅ vertical drag + scale
             transform: `
       translateY(${dragY}px)
       scale(${clicked ? 1.15 : 1})
@@ -629,16 +641,22 @@ export default function BottomNav() {
             const d = searchDragRef.current;
             if (!d) return;
 
+            e.preventDefault(); // 🔥 mobile fix
+
             const dy = e.clientY - d.startY;
 
-            // 🔥 activate drag after small movement
+            // activate drag after small move
             if (Math.abs(dy) > 5 && !d.dragging) {
               d.dragging = true;
             }
 
             if (d.dragging) {
-              // ✅ LIMIT movement (no overlap with tabs)
-              const clamped = Math.max(-20, Math.min(20, dy));
+              // 🔥 iOS-like resistance
+              const resistance = dy > 0 ? 1 : 0.6;
+
+              // 🔥 limit movement
+              const clamped = Math.max(-20, Math.min(20, dy * resistance));
+
               setDragY(clamped);
             }
           }}
@@ -648,11 +666,12 @@ export default function BottomNav() {
 
             const d = searchDragRef.current;
 
+            // 👉 pure click
             if (!d?.dragging) {
               console.log("Search clicked!");
             }
 
-            // ✅ smooth snap back
+            // 🔥 smooth snap back
             setTimeout(() => {
               setClicked(false);
               setDragY(0);
@@ -667,6 +686,11 @@ export default function BottomNav() {
             setClicked(false);
             setDragY(0);
             searchDragRef.current = null;
+          }}
+
+          // 🔥 iOS fallback
+          onTouchMove={(e) => {
+            e.preventDefault();
           }}
         >
           <SearchIcon />
