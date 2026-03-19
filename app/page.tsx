@@ -111,8 +111,12 @@ export default function BottomNav() {
   const pillRef = useRef<PillState>({ left: 0, width: 0, sy: 1, sx: 1, shimmer: 0 });
   const activeRef = useRef<TabId>("home");
 
+
+  // 🔹 state (component ke top me)
   const [clicked, setClicked] = useState(false);
-  // const [dragY, setDragY] = useState(0);
+  const [stretch, setStretch] = useState(0);
+
+
 
   const searchDragRef = useRef<{
     startY: number;
@@ -580,7 +584,6 @@ export default function BottomNav() {
           })}
         </div>
         {/* Search Button */}
-
         <button
           data-search
           style={{
@@ -602,26 +605,43 @@ export default function BottomNav() {
             flexShrink: 0,
             overflow: "hidden",
             zIndex: 10,
-            pointerEvents: "auto",
 
-            // 🔥 MUST for mobile drag
+            // 🔥 MOBILE FIX
             touchAction: "none",
             WebkitUserSelect: "none",
             userSelect: "none",
 
-            // 🔥 smoother rendering
             willChange: "transform",
 
-            // ✅ disable transition while dragging
+            // ✅ smooth animation
             transition: searchDragRef.current?.dragging
               ? "none"
               : "all 0.25s cubic-bezier(0.34,1.56,0.64,1)",
 
-            // ✅ vertical drag + scale
-    //         transform: `
-    //   translateY(${dragY}px)
-    //   scale(${clicked ? 1.15 : 1})
-    // `,
+            // 🔥 FINAL WATER BALLOON TRANSFORM
+            transform: (() => {
+              const s = stretch;
+              const abs = Math.abs(s);
+              const isDown = s > 0;
+
+              // 🎯 non-linear easing (liquid feel)
+              const eased = Math.pow(abs / 20, 0.7) * 20;
+
+              // 🔥 vertical stretch (balanced)
+              const scaleY = 1 + eased * 0.016;
+
+              // 🔥 horizontal squash (balanced for both directions)
+              const scaleX = 1 - eased * 0.006;
+
+              // 🔥 slight damping for realism
+              const damp = 1 - Math.min(abs / 40, 0.35);
+
+              return `
+        scaleY(${scaleY * damp})
+        scaleX(${scaleX * damp})
+        scale(${clicked ? 1.05 : 1})
+      `;
+            })(),
           }}
 
           onPointerDown={(e) => {
@@ -645,19 +665,18 @@ export default function BottomNav() {
 
             const dy = e.clientY - d.startY;
 
-            // activate drag after small move
-            if (Math.abs(dy) > 5 && !d.dragging) {
+            // activate after small move
+            if (Math.abs(dy) > 3) {
               d.dragging = true;
             }
 
             if (d.dragging) {
-              // 🔥 iOS-like resistance
-              const resistance = dy > 0 ? 1 : 0.6;
+              // 🔥 SAME feel up & down (balanced now)
+              const resistance = dy > 0 ? 1 : 0.85;
 
-              // 🔥 limit movement
               const clamped = Math.max(-20, Math.min(20, dy * resistance));
 
-              // setDragY(clamped);
+              setStretch(clamped);
             }
           }}
 
@@ -668,14 +687,14 @@ export default function BottomNav() {
 
             // 👉 pure click
             if (!d?.dragging) {
-              console.log("Search clicked!1234");
+              console.log("Search clicked!");
             }
 
             // 🔥 smooth snap back
             setTimeout(() => {
               setClicked(false);
-              // setDragY(0);
-            }, 120);
+              setStretch(0);
+            }, 140);
 
             searchDragRef.current = null;
           }}
@@ -684,13 +703,12 @@ export default function BottomNav() {
             e.stopPropagation();
 
             setClicked(false);
-            // setDragY(0);
+            setStretch(0);
             searchDragRef.current = null;
           }}
 
-          // 🔥 iOS fallback
           onTouchMove={(e) => {
-            e.preventDefault();
+            e.preventDefault(); // 🔥 iOS fix
           }}
         >
           <SearchIcon />
