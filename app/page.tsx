@@ -493,7 +493,7 @@ export default function BottomNav() {
       </div>
 
       {/* Nav row */}
-      <div style={{ position: "relative", zIndex: 1, display: "flex", alignItems: "center", gap: "15px", padding: "0 6px", }}>
+      <div style={{ position: "relative", zIndex: 1, display: "flex", alignItems: "center", gap: "5px", padding: "0 6px", }}>
         <div
           ref={containerRef}
           style={{
@@ -639,7 +639,6 @@ export default function BottomNav() {
                 const ty = dy * 0.4;
 
                 return `
-          translate(${tx}px, ${ty}px)
           scaleX(${scaleX})
           scaleY(${scaleY})
           scale(${clicked ? 1.05 : 1})
