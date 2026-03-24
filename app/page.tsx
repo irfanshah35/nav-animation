@@ -493,7 +493,7 @@ export default function BottomNav() {
       </div>
 
       {/* Nav row */}
-      <div style={{ position: "relative", zIndex: 1, display: "flex", alignItems: "center", gap: "5px", padding: "0 6px", }}>
+      <div style={{ position: "relative", zIndex: 1, display: "flex", alignItems: "center", gap: "10px", padding: "0 6px", }}>
         <div
           ref={containerRef}
           style={{
@@ -641,7 +641,7 @@ export default function BottomNav() {
                 return `
           scaleX(${scaleX})
           scaleY(${scaleY})
-          scale(${clicked ? 1.05 : 1})
+          scale(${clicked ? 1.2307 : 1})
         `;
               })(),
             }}
