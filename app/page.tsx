@@ -112,13 +112,12 @@ export default function BottomNav() {
   const activeRef = useRef<TabId>("home");
 
 
-  // 🔹 state (component ke top me)
   const [clicked, setClicked] = useState(false);
-  const [stretch, setStretch] = useState(0);
-
-
+  const [stretchX, setStretchX] = useState(0);
+  const [stretchY, setStretchY] = useState(0);
 
   const searchDragRef = useRef<{
+    startX: number;
     startY: number;
     dragging: boolean;
   } | null>(null);
@@ -516,7 +515,7 @@ export default function BottomNav() {
             touchAction: "none", cursor: "pointer",
             overflow: "visible",
             transform: `scale(${navScale})`,
-            transformOrigin: "center bottom",
+            transformOrigin: "center center",
             willChange: "transform",
           }}
           onPointerDown={handlePointerDown}
@@ -584,135 +583,140 @@ export default function BottomNav() {
           })}
         </div>
         {/* Search Button */}
-        <button
-          data-search
+        <div
           style={{
+            width: 52,
+            height: 52,
             position: "relative",
-            width: clicked ? 64 : 52,
-            height: clicked ? 64 : 52,
-            borderRadius: "50%",
-            background: searchBg,
-            backdropFilter: "blur(20px) saturate(200%)",
-            WebkitBackdropFilter: "blur(20px) saturate(200%)",
-            boxShadow: searchShadow,
-            border: searchBorder,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            cursor: "pointer",
-            color: "rgba(255,255,255,.65)",
-            outline: "none",
             flexShrink: 0,
-            overflow: "hidden",
-            zIndex: 10,
-
-            // 🔥 MOBILE FIX
-            touchAction: "none",
-            WebkitUserSelect: "none",
-            userSelect: "none",
-
-            willChange: "transform",
-
-            // ✅ smooth animation
-            transition: searchDragRef.current?.dragging
-              ? "none"
-              : "all 0.25s cubic-bezier(0.34,1.56,0.64,1)",
-
-            // 🔥 FINAL WATER BALLOON TRANSFORM
-            transform: (() => {
-              const s = stretch;
-              const abs = Math.abs(s);
-              const isDown = s > 0;
-
-              // 🎯 non-linear easing (liquid feel)
-              const eased = Math.pow(abs / 20, 0.7) * 20;
-
-              // 🔥 vertical stretch (balanced)
-              const scaleY = 1 + eased * 0.016;
-
-              // 🔥 horizontal squash (balanced for both directions)
-              const scaleX = 1 - eased * 0.006;
-
-              // 🔥 slight damping for realism
-              const damp = 1 - Math.min(abs / 40, 0.35);
-
-              return `
-        scaleY(${scaleY * damp})
-        scaleX(${scaleX * damp})
-        scale(${clicked ? 1.05 : 1})
-      `;
-            })(),
-          }}
-
-          onPointerDown={(e) => {
-            e.stopPropagation();
-
-            setClicked(true);
-
-            searchDragRef.current = {
-              startY: e.clientY,
-              dragging: false,
-            };
-
-            e.currentTarget.setPointerCapture(e.pointerId);
-          }}
-
-          onPointerMove={(e) => {
-            const d = searchDragRef.current;
-            if (!d) return;
-
-            e.preventDefault(); // 🔥 mobile fix
-
-            const dy = e.clientY - d.startY;
-
-            // activate after small move
-            if (Math.abs(dy) > 3) {
-              d.dragging = true;
-            }
-
-            if (d.dragging) {
-              // 🔥 SAME feel up & down (balanced now)
-              const resistance = dy > 0 ? 1 : 0.85;
-
-              const clamped = Math.max(-20, Math.min(20, dy * resistance));
-
-              setStretch(clamped);
-            }
-          }}
-
-          onPointerUp={(e) => {
-            e.stopPropagation();
-
-            const d = searchDragRef.current;
-
-            // 👉 pure click
-            if (!d?.dragging) {
-              console.log("Search clicked!");
-            }
-
-            // 🔥 smooth snap back
-            setTimeout(() => {
-              setClicked(false);
-              setStretch(0);
-            }, 140);
-
-            searchDragRef.current = null;
-          }}
-
-          onPointerLeave={(e) => {
-            e.stopPropagation();
-
-            setClicked(false);
-            setStretch(0);
-            searchDragRef.current = null;
-          }}
-
-          onTouchMove={(e) => {
-            e.preventDefault(); // 🔥 iOS fix
           }}
         >
-          <SearchIcon />
-        </button>
+          <button
+            data-search
+            style={{
+              position: "absolute", 
+              inset: 0,             
+              borderRadius: "50%",
+              background: searchBg,
+              backdropFilter: "blur(20px) saturate(200%)",
+              WebkitBackdropFilter: "blur(20px) saturate(200%)",
+              boxShadow: searchShadow,
+              border: searchBorder,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              cursor: "pointer",
+              color: "rgba(255,255,255,.65)",
+              outline: "none",
+              overflow: "hidden",
+              zIndex: 10,
+              touchAction: "none",
+              userSelect: "none",
+              WebkitUserSelect: "none",
+              willChange: "transform",
+              transformOrigin: "center center",
+              transition: searchDragRef.current?.dragging
+                ? "none"
+                : "transform 0.25s cubic-bezier(0.34,1.56,0.64,1)",
+
+              transform: (() => {
+                const dx = stretchX;
+                const dy = stretchY;
+
+                const absX = Math.abs(dx);
+                const absY = Math.abs(dy);
+
+                const nx = Math.min(absX / 40, 1);
+                const ny = Math.min(absY / 40, 1);
+
+                const easeX = 1 - Math.pow(1 - nx, 2);
+                const easeY = 1 - Math.pow(1 - ny, 2);
+
+                const scaleX = 1 + easeX * 0.4 - easeY * 0.15;
+                const scaleY = 1 + easeY * 0.4 - easeX * 0.15;
+
+                const tx = dx * 0.4;
+                const ty = dy * 0.4;
+
+                return `
+          translate(${tx}px, ${ty}px)
+          scaleX(${scaleX})
+          scaleY(${scaleY})
+          scale(${clicked ? 1.05 : 1})
+        `;
+              })(),
+            }}
+
+            onPointerDown={(e) => {
+              e.stopPropagation();
+
+              setClicked(true);
+
+              searchDragRef.current = {
+                startX: e.clientX,
+                startY: e.clientY,
+                dragging: false,
+              };
+
+              e.currentTarget.setPointerCapture(e.pointerId);
+            }}
+
+            onPointerMove={(e) => {
+              const d = searchDragRef.current;
+              if (!d) return;
+
+              e.preventDefault();
+
+              const dx = e.clientX - d.startX;
+              const dy = e.clientY - d.startY;
+
+              if (Math.abs(dx) > 3 || Math.abs(dy) > 3) {
+                d.dragging = true;
+              }
+
+              if (d.dragging) {
+                const clampX = Math.max(-40, Math.min(40, dx));
+                const clampY = Math.max(-40, Math.min(40, dy));
+
+                setStretchX(clampX);
+                setStretchY(clampY);
+              }
+            }}
+
+            onPointerUp={(e) => {
+              e.stopPropagation();
+
+              const d = searchDragRef.current;
+
+              if (!d?.dragging) {
+                console.log("Search clicked!");
+              }
+
+              setTimeout(() => {
+                setClicked(false);
+                setStretchX(0);
+                setStretchY(0);
+              }, 120);
+
+              searchDragRef.current = null;
+            }}
+
+            onPointerLeave={(e) => {
+              e.stopPropagation();
+
+              setClicked(false);
+              setStretchX(0);
+              setStretchY(0);
+              searchDragRef.current = null;
+            }}
+
+            onTouchMove={(e) => {
+              e.preventDefault();
+            }}
+          >
+            <SearchIcon />
+          </button>
+        </div>
       </div>
     </div>
   );
